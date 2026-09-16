@@ -110,6 +110,17 @@ const TOTAL = ALL_KEYS.length;
 const ORDER = ["success", "partial", "fail"];
 const nextStatus = c => !c ? "success" : ORDER.indexOf(c) === 2 ? undefined : ORDER[ORDER.indexOf(c) + 1];
 
+// 보상 깃발 (게이지 위에 표시 · 탭해서 이름 수정 가능)
+const DEFAULT_REWARDS = [{
+  title: "1차 보상",
+  kg: 52,
+  text: ""
+}, {
+  title: "2차 보상",
+  kg: GOAL_W,
+  text: ""
+}];
+
 // ---- 로컬 저장 (브라우저에 기록이 남아 매일 이어서 쓸 수 있음) ----
 const LS_KEY = "final-cut/v1";
 function loadState() {
@@ -119,7 +130,8 @@ function loadState() {
       const s = JSON.parse(raw);
       return {
         data: s.data || {},
-        curW: typeof s.curW === "number" ? s.curW : START_W
+        curW: typeof s.curW === "number" ? s.curW : START_W,
+        rewards: Array.isArray(s.rewards) && s.rewards.length ? s.rewards : DEFAULT_REWARDS
       };
     }
   } catch (e) {}
@@ -127,13 +139,15 @@ function loadState() {
     data: {
       "2026-09-15": "success"
     },
-    curW: 55.6
+    curW: 55.6,
+    rewards: DEFAULT_REWARDS
   };
 }
 function App() {
   const _init = loadState();
   const [data, setData] = useState(_init.data);
   const [curW, setCurW] = useState(_init.curW);
+  const [rewards, setRewards] = useState(_init.rewards);
   const [pop, setPop] = useState(null);
   const [menu, setMenu] = useState(false);
   const [confirm, setConfirm] = useState(false);
@@ -141,10 +155,11 @@ function App() {
     try {
       localStorage.setItem(LS_KEY, JSON.stringify({
         data,
-        curW
+        curW,
+        rewards
       }));
     } catch (e) {}
-  }, [data, curW]);
+  }, [data, curW, rewards]);
   const done = useMemo(() => Object.values(data).filter(v => v === "success").length, [data]);
   const streak = useMemo(() => {
     const ti = ALL_KEYS.indexOf(TODAY);
@@ -237,8 +252,8 @@ function App() {
       setConfirm(true);
     }
   }, "\uC804\uCCB4 \uCD08\uAE30\uD654"))))), (() => {
-    const lost = START_W - curW;
-    const prog = Math.max(0, Math.min(1, lost / (START_W - GOAL_W))) * 100;
+    const N = START_W - GOAL_W; // 칸 수 (56→48 = 8칸)
+    const lost = Math.max(0, START_W - curW);
     const step = d => setCurW(w => Math.min(90, Math.max(40, Math.round((w + d) * 10) / 10)));
     const Step = ({
       d,
@@ -261,13 +276,21 @@ function App() {
         justifyContent: "center"
       }
     }, children);
+    const pctFor = kg => Math.max(5, Math.min(95, (START_W - kg) / N * 100));
+    const editReward = i => {
+      const v = window.prompt(`${rewards[i].title} 이름을 적어주세요`, rewards[i].text || "");
+      if (v != null) setRewards(r => r.map((x, k) => k === i ? {
+        ...x,
+        text: v.trim()
+      } : x));
+    };
     return /*#__PURE__*/React.createElement("div", {
       style: {
         marginTop: 16,
         background: C.card,
         border: `1px solid ${C.line}`,
         borderRadius: 14,
-        padding: "13px 15px"
+        padding: "14px 16px 16px"
       }
     }, /*#__PURE__*/React.createElement("div", {
       className: "flex items-center justify-between"
@@ -281,7 +304,7 @@ function App() {
         fontSize: 12,
         color: C.faint
       }
-    }, "\uBAA9\uD45C ", GOAL_W, "kg \xB7 \u22128kg")), /*#__PURE__*/React.createElement("div", {
+    }, "\uBAA9\uD45C ", GOAL_W, "kg \xB7 \u2212", N, "kg")), /*#__PURE__*/React.createElement("div", {
       className: "flex items-center justify-between",
       style: {
         marginTop: 6
@@ -315,37 +338,43 @@ function App() {
         color: lost > 0 ? C.accent : C.faint
       }
     }, lost > 0 ? `−${lost.toFixed(1)}kg` : "0.0kg")), /*#__PURE__*/React.createElement("div", {
+      className: "gauge-flags",
       style: {
-        marginTop: 11,
-        height: 8,
-        borderRadius: 999,
-        background: "#EDE9E1",
-        overflow: "hidden"
+        marginTop: 22
+      }
+    }, rewards.map((rw, i) => /*#__PURE__*/React.createElement("div", {
+      key: i,
+      className: "flag",
+      style: {
+        left: `${pctFor(rw.kg)}%`
       }
     }, /*#__PURE__*/React.createElement("div", {
+      className: "flag-title"
+    }, rw.title), /*#__PURE__*/React.createElement("button", {
+      className: "flag-pill",
+      onClick: () => editReward(i)
+    }, rw.text || "탭해서 입력"), /*#__PURE__*/React.createElement("div", {
+      className: "flag-line"
+    })))), /*#__PURE__*/React.createElement("div", {
+      className: "gauge-bar"
+    }, Array.from({
+      length: N
+    }).map((_, i) => /*#__PURE__*/React.createElement("div", {
+      key: i,
+      className: "gauge-cell"
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "gauge-cell-fill",
       style: {
-        height: "100%",
-        width: `${prog}%`,
-        borderRadius: 999,
-        background: C.accent,
-        transition: "width .3s ease"
+        width: `${Math.max(0, Math.min(1, lost - i)) * 100}%`
       }
-    })), /*#__PURE__*/React.createElement("div", {
-      className: "flex justify-between",
-      style: {
-        marginTop: 5
-      }
-    }, /*#__PURE__*/React.createElement("span", {
-      style: {
-        fontSize: 11,
-        color: C.faint
-      }
-    }, "\uC2DC\uC791 ", START_W), /*#__PURE__*/React.createElement("span", {
-      style: {
-        fontSize: 11,
-        color: C.faint
-      }
-    }, "\uBAA9\uD45C ", GOAL_W)));
+    })))), /*#__PURE__*/React.createElement("div", {
+      className: "gauge-labels"
+    }, Array.from({
+      length: N + 1
+    }).map((_, i) => /*#__PURE__*/React.createElement("span", {
+      key: i,
+      className: "gauge-lab"
+    }, START_W - i))));
   })(), /*#__PURE__*/React.createElement("div", {
     className: "flex items-center justify-between",
     style: {
@@ -662,6 +691,36 @@ const FONT = '-apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Pretend
 const CSS = `
   * { box-sizing: border-box; -webkit-font-smoothing: antialiased; }
   body { margin: 0; }
+
+  /* --- 레이아웃 유틸 (Tailwind 없이 동작하도록 직접 정의) --- */
+  .min-h-screen { min-height: 100vh; min-height: 100dvh; }
+  .w-full { width: 100%; }
+  .flex { display: flex; }
+  .flex-col { flex-direction: column; }
+  .items-start { align-items: flex-start; }
+  .items-center { align-items: center; }
+  .items-baseline { align-items: baseline; }
+  .justify-center { justify-content: center; }
+  .justify-between { justify-content: space-between; }
+  .grid { display: grid; }
+  .grid-cols-7 { grid-template-columns: repeat(7, minmax(0, 1fr)); }
+  .relative { position: relative; }
+  .absolute { position: absolute; }
+  .inset-0 { inset: 0; }
+
+  /* --- 체중 게이지 (칸 막대 + 보상 깃발) --- */
+  .gauge-flags { position: relative; height: 42px; }
+  .flag { position: absolute; bottom: 0; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; }
+  .flag-title { font-size: 10px; font-weight: 700; color: ${C.faint}; margin-bottom: 3px; white-space: nowrap; }
+  .flag-pill { font-size: 11px; font-weight: 700; color: ${C.accentDeep}; background: ${C.accentTint}; border: none; border-radius: 8px; padding: 3px 9px; max-width: 130px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; }
+  .flag-line { width: 2px; height: 9px; background: ${C.accent}; margin-top: 3px; border-radius: 1px; }
+  .gauge-bar { display: flex; height: 26px; margin-top: 4px; border: 1px solid #E0D8CB; border-radius: 8px; overflow: hidden; }
+  .gauge-cell { flex: 1; position: relative; background: #FDFBF7; border-right: 1px solid #EDE7DC; }
+  .gauge-cell:last-child { border-right: none; }
+  .gauge-cell-fill { position: absolute; left: 0; top: 0; bottom: 0; background: ${C.accent}; transition: width .3s ease; }
+  .gauge-labels { display: flex; justify-content: space-between; margin-top: 5px; }
+  .gauge-lab { font-size: 10px; font-weight: 700; color: ${C.faint}; }
+
   @keyframes pop { 0%{transform:scale(.9)} 50%{transform:scale(1.06)} 100%{transform:scale(1)} }
   .cell.pop { animation: pop .26s ease-out; }
   .menu-pop { position:absolute; top:38px; right:0; z-index:20; background:#fff; border:1px solid ${C.line}; border-radius:12px; box-shadow:0 8px 26px rgba(60,50,30,0.14); overflow:hidden; width:126px; }

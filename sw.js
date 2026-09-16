@@ -1,7 +1,7 @@
 /* 파이널 컷 · 서비스 워커
    앱 셸을 캐시해서 오프라인에서도 열리고, 데스크톱/홈화면 설치가 가능하게 함.
    앱을 업데이트하면 CACHE 버전을 올리세요(예: v1 → v2). */
-const CACHE = "final-cut-v1";
+const CACHE = "final-cut-v2";
 
 const ASSETS = [
   ".",
