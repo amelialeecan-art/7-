@@ -1,0 +1,16 @@
+{
+  "name": "final-cut",
+  "version": "1.0.0",
+  "private": true,
+  "description": "파이널 컷 · 7주 데일리 체크 캘린더 (installable PWA)",
+  "scripts": {
+    "vendor": "npm i --no-save react@18.3.1 react-dom@18.3.1 && cp node_modules/react/umd/react.production.min.js vendor/ && cp node_modules/react-dom/umd/react-dom.production.min.js vendor/",
+    "build": "babel src/app.jsx --presets @babel/preset-react -o app.js",
+    "serve": "python3 -m http.server 8899"
+  },
+  "devDependencies": {
+    "@babel/cli": "^7",
+    "@babel/core": "^7",
+    "@babel/preset-react": "^7"
+  }
+}
