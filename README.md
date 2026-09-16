@@ -62,5 +62,12 @@ React 로컬 번들을 갱신하려면 `npm run vendor` 를 실행합니다.
 
 ## 배포 (GitHub Pages)
 
-`main` 브랜치에 푸시하면 `.github/workflows/deploy.yml` 가 자동으로 GitHub Pages에 배포합니다.
-저장소 **Settings → Pages → Build and deployment → Source** 를 **GitHub Actions** 로 한 번 설정해 주세요.
+빌드가 필요 없는 정적 사이트라, 브랜치에서 바로 서빙합니다. **최초 1회만** 설정하면 됩니다.
+
+1. 저장소 **Settings → Pages** 이동
+2. **Build and deployment → Source** 를 **Deploy from a branch** 로 선택
+3. **Branch** 를 `main`, 폴더는 `/ (root)` 로 두고 **Save**
+
+몇 분 뒤 `https://amelialeecan-art.github.io/7-/` 에서 열립니다.
+이후 `main` 에 푸시하면 자동으로 갱신됩니다.
+앱 내용을 바꿀 때는 `sw.js` 의 `CACHE` 버전(`final-cut-v1` → `v2` …)을 올려야 기존 사용자에게 갱신본이 전달됩니다.
